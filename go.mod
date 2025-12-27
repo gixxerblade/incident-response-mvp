@@ -1,4 +1,4 @@
-module github.com/yourusername/incident-response-mvp
+module github.com/gixxerblade/incident-response-mvp
 
 go 1.23.0
 
