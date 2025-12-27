@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/yourusername/incident-response-mvp/internal/models"
-	"github.com/yourusername/incident-response-mvp/internal/services"
+	"github.com/gixxerblade/incident-response-mvp/internal/models"
+	"github.com/gixxerblade/incident-response-mvp/internal/services"
 )
 
 // EventsHandler handles event-related API endpoints

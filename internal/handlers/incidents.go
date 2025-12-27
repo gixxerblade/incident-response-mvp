@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/yourusername/incident-response-mvp/internal/models"
+	"github.com/gixxerblade/incident-response-mvp/internal/models"
 )
 
 // IncidentsHandler handles incident-related API endpoints

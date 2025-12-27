@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Incident Response Agent
+      - APP_VERSION=0.1.0
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DATABASE_URL=/app/data/incidents.db
+      - RULES_DIR=/app/data/rules
+      - PLAYBOOKS_DIR=/app/data/playbooks
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

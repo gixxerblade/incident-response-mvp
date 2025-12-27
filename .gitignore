@@ -1,0 +1,47 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+incident-response-server
+incident-response-cli
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+data/incidents.db*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/

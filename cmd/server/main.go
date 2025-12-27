@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/yourusername/incident-response-mvp/internal/config"
-	"github.com/yourusername/incident-response-mvp/internal/database"
-	"github.com/yourusername/incident-response-mvp/internal/handlers"
-	"github.com/yourusername/incident-response-mvp/internal/services"
+	"github.com/gixxerblade/incident-response-mvp/internal/config"
+	"github.com/gixxerblade/incident-response-mvp/internal/database"
+	"github.com/gixxerblade/incident-response-mvp/internal/handlers"
+	"github.com/gixxerblade/incident-response-mvp/internal/services"
 )
 
 func main() {

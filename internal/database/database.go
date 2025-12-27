@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/yourusername/incident-response-mvp/internal/config"
-	"github.com/yourusername/incident-response-mvp/internal/models"
+	"github.com/gixxerblade/incident-response-mvp/internal/config"
+	"github.com/gixxerblade/incident-response-mvp/internal/models"
 )
 
 // DB is the global database instance

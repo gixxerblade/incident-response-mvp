@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 
-	"github.com/yourusername/incident-response-mvp/internal/models"
+	"github.com/gixxerblade/incident-response-mvp/internal/models"
 )
 
 // Rule represents a detection rule loaded from YAML

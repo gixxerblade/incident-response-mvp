@@ -8,7 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/yourusername/incident-response-mvp/internal/models"
+	"github.com/gixxerblade/incident-response-mvp/internal/models"
 )
 
 // Action interface defines the contract for all actions
