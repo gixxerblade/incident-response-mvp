@@ -1,0 +1,147 @@
+playbook:
+  id: async-worker-recovery
+  name: "Async Worker Recovery"
+  description: "Automated recovery for async task queue failures"
+  version: "1.0"
+
+  inputs:
+    - name: incident_id
+      required: true
+    - name: service
+      required: true
+    - name: job_type
+      required: true
+    - name: environment
+      required: false
+
+  steps:
+    - id: step-1
+      name: "Check Batch Host Health"
+      action: ssh_command
+      parameters:
+        host: "{{ inputs.environment == 'staging' ? 'staging-fe-01' : 'fe-01' }}"
+        command: "tail -n 50 /var/log/bycore/batch-monitor_rq-bycore_batch.log"
+        description: "Verify batch job is enqueuing heartbeats"
+      on_failure: continue
+
+    - id: step-2
+      name: "Query Grafana Metrics"
+      action: grafana_query
+      parameters:
+        dashboard: "async-worker"
+        environment: "{{ inputs.environment }}"
+        metric: "rq_job_duration"
+        lookback: "15m"
+      on_failure: continue
+
+    - id: step-3
+      name: "Check Worker Process Status"
+      action: ssh_command
+      parameters:
+        host: "shell-01"
+        command: "ansible {{ inputs.service | replace('async_', 'async_worker_') }} -i hosts.yaml -a 'sudo docker-compose -f /home/bycore_{{ inputs.service }}/docker-compose.yaml ps'"
+        description: "Verify worker containers are running"
+      on_failure: continue
+
+    - id: step-4
+      name: "Check Prometheus Alerts"
+      action: prometheus_query
+      parameters:
+        host: "monitor-01"
+        query: "ALERTS{alertname=~'async.*is_down'}"
+      on_failure: continue
+
+    - id: step-5
+      name: "Clear Scheduler Lock (if scheduled job)"
+      action: ssh_command
+      parameters:
+        host: "fe-01"
+        command: "sudo su bycore_batch -c './bin/run_batch.sh remove_async_worker_locks --not-dry-run'"
+        description: "Remove stuck Redis scheduler locks"
+      condition: "{{ inputs.job_type == 'scheduled' }}"
+      on_failure: continue
+
+    - id: step-6
+      name: "Check Worker Logs"
+      action: ssh_command
+      parameters:
+        host: "pdx2a-async-01"
+        command: "sudo su bycore_async_worker -c 'cd && docker-compose logs bycore_async_worker | tail -n 50'"
+        description: "Look for exceptions or errors"
+      on_failure: continue
+
+    - id: step-7
+      name: "Check Host Metrics"
+      action: grafana_query
+      parameters:
+        dashboard: "node-exporter"
+        environment: "{{ inputs.environment }}"
+        host: "pdx2a-async-01"
+        metrics: ["memory_usage", "iowait", "cpu_usage"]
+        lookback: "15m"
+      on_failure: continue
+
+    - id: step-8
+      name: "AI Analysis - Determine Root Cause"
+      action: ai_analyze
+      parameters:
+        incident_id: "{{ inputs.incident_id }}"
+        context: |
+          Async worker {{ inputs.service }} ({{ inputs.job_type }}) heartbeat failed.
+
+          Batch logs: {{ steps.step-1.output }}
+          Worker status: {{ steps.step-3.output }}
+          Worker logs: {{ steps.step-6.output }}
+          Metrics: {{ steps.step-2.output }}
+
+          Analyze the above data and determine:
+          1. Root cause of the failure
+          2. Recommended remediation action
+          3. Whether to restart workers or rollback
+        model: "claude-sonnet-4"
+      on_failure: continue
+
+    - id: step-9
+      name: "Log AI Recommendation"
+      action: log_action
+      parameters:
+        message: "AI Analysis: {{ steps.step-8.output.recommendation }}"
+        level: "info"
+
+    - id: step-10
+      name: "Attempt Automatic Restart"
+      action: ssh_command
+      parameters:
+        host: "shell-01"
+        command: "ansible {{ inputs.service | replace('async_', 'async_worker_') }} -i hosts.yaml -a 'sudo docker-compose -f /home/bycore_{{ inputs.service }}/docker-compose.yaml up -d'"
+        description: "Restart worker containers"
+      condition: "{{ steps.step-8.output.confidence > 0.8 }}"
+      on_failure: abort
+
+    - id: step-11
+      name: "Update Incident with Findings"
+      action: update_incident
+      parameters:
+        incident_id: "{{ inputs.incident_id }}"
+        status: "investigating"
+        notes: |
+          Root Cause: {{ steps.step-8.output.root_cause }}
+          Recommendation: {{ steps.step-8.output.recommendation }}
+          Auto-restart: {{ steps.step-10.status }}
+
+    - id: step-12
+      name: "Escalate to SME if Needed"
+      action: notify
+      parameters:
+        channel: "pagerduty"
+        message: "Async worker issue requires manual intervention. SME: herb. Incident: {{ inputs.incident_id }}"
+        priority: "high"
+      condition: "{{ steps.step-8.output.confidence < 0.8 || steps.step-10.error }}"
+
+    - id: step-13
+      name: "Final Status Update"
+      action: update_incident
+      parameters:
+        incident_id: "{{ inputs.incident_id }}"
+        status: "{{ steps.step-10.error ? 'investigating' : 'contained' }}"
+        notes: "Playbook execution completed. Manual follow-up may be required."

@@ -1,0 +1,206 @@
+playbook:
+  id: generic-integration-examples
+  name: "Generic Integration Examples"
+  description: "Shows how to integrate with ANY service using generic actions"
+  version: "1.0"
+
+  inputs:
+    - name: incident_id
+      required: true
+
+  steps:
+    # ============================================================
+    # SLACK - No custom action needed!
+    # ============================================================
+    - id: notify-slack
+      name: "Send Slack Message"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+        headers:
+          Content-Type: "application/json"
+        body:
+          text: "🚨 Incident {{ inputs.incident_id }} detected!"
+          channel: "#incidents"
+
+    # ============================================================
+    # JIRA - No custom action needed!
+    # ============================================================
+    - id: create-jira-ticket
+      name: "Create Jira Ticket"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://your-domain.atlassian.net/rest/api/3/issue"
+        headers:
+          Authorization: "Basic YOUR_AUTH_TOKEN"
+          Content-Type: "application/json"
+        body:
+          fields:
+            project:
+              key: "OPS"
+            summary: "Incident {{ inputs.incident_id }}"
+            description: "Automated incident response"
+            issuetype:
+              name: "Task"
+
+    # ============================================================
+    # PAGERDUTY - No custom action needed!
+    # ============================================================
+    - id: page-oncall
+      name: "Page On-Call Engineer"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://events.pagerduty.com/v2/enqueue"
+        headers:
+          Authorization: "Token token=YOUR_API_KEY"
+          Content-Type: "application/json"
+        body:
+          routing_key: "YOUR_INTEGRATION_KEY"
+          event_action: "trigger"
+          payload:
+            summary: "Incident {{ inputs.incident_id }}"
+            severity: "critical"
+            source: "incident-response-agent"
+
+    # ============================================================
+    # DATADOG - No custom action needed!
+    # ============================================================
+    - id: send-datadog-event
+      name: "Send Datadog Event"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://api.datadoghq.com/api/v1/events"
+        headers:
+          DD-API-KEY: "YOUR_API_KEY"
+          Content-Type: "application/json"
+        body:
+          title: "Incident {{ inputs.incident_id }}"
+          text: "Automated incident response triggered"
+          tags: ["incident", "automated"]
+
+    # ============================================================
+    # CUSTOM PYTHON SCRIPT - Run your own code!
+    # ============================================================
+    - id: run-custom-analysis
+      name: "Run Custom Python Analysis"
+      action: python_script
+      parameters:
+        script: "./scripts/analyze_incident.py"
+        args:
+          - "{{ inputs.incident_id }}"
+          - "--verbose"
+
+    # ============================================================
+    # ARBITRARY SHELL COMMANDS - Ultimate flexibility!
+    # ============================================================
+    - id: custom-bash-logic
+      name: "Run Custom Bash Script"
+      action: shell_script
+      parameters:
+        script: |
+          #!/bin/bash
+          INCIDENT_ID="{{ inputs.incident_id }}"
+
+          # Your custom logic here
+          echo "Processing incident: $INCIDENT_ID"
+
+          # Call your internal APIs
+          curl -X POST https://internal-api/incidents/$INCIDENT_ID/process
+
+          # Run database queries
+          psql -c "UPDATE incidents SET status='processing' WHERE id='$INCIDENT_ID'"
+
+          # Anything you need!
+        timeout: 60
+
+    # ============================================================
+    # GRAFANA API - No custom action needed!
+    # ============================================================
+    - id: query-grafana
+      name: "Query Grafana Metrics"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://grafana.example.com/api/ds/query"
+        headers:
+          Authorization: "Bearer YOUR_API_KEY"
+          Content-Type: "application/json"
+        body:
+          queries:
+            - refId: "A"
+              datasource: "Prometheus"
+              expr: "up{job='api'}"
+              range: true
+
+    # ============================================================
+    # PROMETHEUS API - No custom action needed!
+    # ============================================================
+    - id: check-prometheus
+      name: "Check Prometheus Alerts"
+      action: http_request
+      parameters:
+        method: "GET"
+        url: "http://prometheus:9090/api/v1/alerts"
+
+    # ============================================================
+    # ZENDESK - No custom action needed!
+    # ============================================================
+    - id: create-zendesk-ticket
+      name: "Create Zendesk Ticket"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://yourcompany.zendesk.com/api/v2/tickets.json"
+        headers:
+          Authorization: "Basic YOUR_AUTH"
+          Content-Type: "application/json"
+        body:
+          ticket:
+            subject: "Incident {{ inputs.incident_id }}"
+            comment:
+              body: "Automated incident detected"
+            priority: "high"
+
+    # ============================================================
+    # GITHUB - Create issue automatically!
+    # ============================================================
+    - id: create-github-issue
+      name: "Create GitHub Issue"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://api.github.com/repos/owner/repo/issues"
+        headers:
+          Authorization: "token YOUR_GITHUB_TOKEN"
+          Content-Type: "application/json"
+        body:
+          title: "Incident {{ inputs.incident_id }}"
+          body: "Automated incident report"
+          labels: ["incident", "automated"]
+
+    # ============================================================
+    # SENDGRID - Send email!
+    # ============================================================
+    - id: send-email
+      name: "Send Email via SendGrid"
+      action: http_request
+      parameters:
+        method: "POST"
+        url: "https://api.sendgrid.com/v3/mail/send"
+        headers:
+          Authorization: "Bearer YOUR_SENDGRID_API_KEY"
+          Content-Type: "application/json"
+        body:
+          personalizations:
+            - to:
+                - email: "oncall@company.com"
+          from:
+            email: "incidents@company.com"
+          subject: "Incident {{ inputs.incident_id }}"
+          content:
+            - type: "text/plain"
+              value: "Incident details..."

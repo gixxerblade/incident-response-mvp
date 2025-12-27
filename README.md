@@ -26,22 +26,26 @@ Event → Detection Engine → Incident → Playbook → Actions
 ### Using Docker (Recommended)
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/gixxerblade/incident-response-mvp.git
    cd incident-response-mvp
    ```
 
 2. **Start the service**:
+
    ```bash
    docker-compose up -d
    ```
 
 3. **Verify the service is running**:
+
    ```bash
    curl http://localhost:8000/health
    ```
 
 4. **Send a test event**:
+
    ```bash
    curl -X POST http://localhost:8000/api/v1/events \
      -H "Content-Type: application/json" \
@@ -57,11 +61,13 @@ Event → Detection Engine → Incident → Playbook → Actions
    ```
 
 5. **Check for incidents**:
+
    ```bash
    curl http://localhost:8000/api/v1/incidents
    ```
 
 6. **View logs**:
+
    ```bash
    docker-compose logs -f api
    ```
@@ -69,16 +75,19 @@ Event → Detection Engine → Incident → Playbook → Actions
 ### Local Development
 
 1. **Install dependencies**:
+
    ```bash
    go mod download
    ```
 
 2. **Copy environment file**:
+
    ```bash
    cp .env.example .env
    ```
 
 3. **Run the server**:
+
    ```bash
    go run cmd/server/main.go
    ```
@@ -107,6 +116,7 @@ done
 ```
 
 This will:
+
 1. Create an incident
 2. Execute the `brute-force-response` playbook
 3. Simulate blocking the IP address
@@ -159,16 +169,19 @@ done
 Rules are defined in YAML format in `data/rules/`. The MVP includes 3 sample rules:
 
 ### auth-001: Brute Force Detection
+
 - Triggers on 5+ failed login attempts from the same IP within 5 minutes
 - Creates high-severity incident
 - Executes brute force response playbook
 
 ### net-001: Port Scan Detection
+
 - Triggers on 20+ distinct ports accessed from same IP within 1 minute
 - Creates high-severity incident
 - Executes port scan response playbook
 
 ### mal-001: Suspicious Process Detection
+
 - Detects processes with random hex names spawned by cmd.exe/powershell.exe
 - Creates high-severity incident
 - Sends notification
@@ -178,12 +191,14 @@ Rules are defined in YAML format in `data/rules/`. The MVP includes 3 sample rul
 Playbooks are defined in YAML format in `data/playbooks/`. The MVP includes 2 sample playbooks:
 
 ### brute-force-response
+
 1. Block source IP (simulated)
 2. Log blocking action
 3. Update incident status to "contained"
 4. Send notification
 
 ### port-scan-response
+
 1. Log port scan activity
 2. Block scanner IP (simulated)
 3. Send notification to security team
@@ -316,12 +331,14 @@ playbook:
 ## Roadmap
 
 ### Post-MVP (Phase 2)
+
 - PostgreSQL support
 - Real integrations (Slack, PagerDuty, email)
 - CLI tool with Cobra
 - Comprehensive test suite
 
 ### Future Enhancements
+
 - ML-based anomaly detection
 - Web dashboard UI
 - SIEM integrations

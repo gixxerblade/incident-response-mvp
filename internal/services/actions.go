@@ -36,6 +36,18 @@ func NewActionRegistry(db *gorm.DB) *ActionRegistry {
 	registry.Register("log_action", &LogActionAction{db: db})
 	registry.Register("update_incident", &UpdateIncidentAction{db: db})
 
+	// Register advanced actions for real-world playbooks
+	registry.Register("ssh_command", &SSHCommandAction{db: db})
+	registry.Register("grafana_query", &GrafanaQueryAction{db: db})
+	registry.Register("prometheus_query", &PrometheusQueryAction{db: db})
+	registry.Register("ai_analyze", &AIAnalyzeAction{db: db})
+
+	// Register generic actions that work with ANY service
+	registry.Register("http_request", &HTTPRequestAction{db: db})
+	registry.Register("shell_script", &ShellScriptAction{db: db})
+	registry.Register("webhook", &WebhookAction{db: db})
+	registry.Register("python_script", &PythonScriptAction{db: db})
+
 	return registry
 }
 
@@ -249,4 +261,121 @@ func getIntParam(params map[string]interface{}, key string, defaultValue int) in
 		return int(val)
 	}
 	return defaultValue
+}
+
+// SSHCommandAction executes SSH commands on remote hosts
+type SSHCommandAction struct {
+	db *gorm.DB
+}
+
+func (a *SSHCommandAction) Execute(params map[string]interface{}) (interface{}, error) {
+	host := getStringParam(params, "host", "")
+	command := getStringParam(params, "command", "")
+	description := getStringParam(params, "description", "")
+
+	if host == "" || command == "" {
+		return nil, fmt.Errorf("host and command parameters are required")
+	}
+
+	// For MVP, simulate SSH command execution
+	log.Printf("[ACTION] [SSH] Would execute on %s: %s", host, command)
+	log.Printf("[ACTION] [SSH] Description: %s", description)
+
+	// In production, this would use crypto/ssh to actually execute the command
+	// For now, return simulated output
+	return map[string]interface{}{
+		"host":        host,
+		"command":     command,
+		"output":      "Simulated command output - implement real SSH client for production",
+		"exit_code":   0,
+		"simulated":   true,
+		"description": description,
+	}, nil
+}
+
+// GrafanaQueryAction queries Grafana dashboards
+type GrafanaQueryAction struct {
+	db *gorm.DB
+}
+
+func (a *GrafanaQueryAction) Execute(params map[string]interface{}) (interface{}, error) {
+	dashboard := getStringParam(params, "dashboard", "")
+	environment := getStringParam(params, "environment", "prod")
+	metric := getStringParam(params, "metric", "")
+
+	log.Printf("[ACTION] [GRAFANA] Querying dashboard=%s, env=%s, metric=%s", dashboard, environment, metric)
+
+	// In production, this would use Grafana HTTP API
+	// For MVP, return simulated metrics
+	return map[string]interface{}{
+		"dashboard":   dashboard,
+		"environment": environment,
+		"metric":      metric,
+		"value":       42.5,
+		"trend":       "stable",
+		"simulated":   true,
+	}, nil
+}
+
+// PrometheusQueryAction queries Prometheus
+type PrometheusQueryAction struct {
+	db *gorm.DB
+}
+
+func (a *PrometheusQueryAction) Execute(params map[string]interface{}) (interface{}, error) {
+	host := getStringParam(params, "host", "")
+	query := getStringParam(params, "query", "")
+
+	log.Printf("[ACTION] [PROMETHEUS] Query on %s: %s", host, query)
+
+	// In production, would use Prometheus HTTP API
+	return map[string]interface{}{
+		"host":      host,
+		"query":     query,
+		"alerts":    []string{},
+		"simulated": true,
+	}, nil
+}
+
+// AIAnalyzeAction uses Claude API for intelligent incident analysis
+type AIAnalyzeAction struct {
+	db *gorm.DB
+}
+
+func (a *AIAnalyzeAction) Execute(params map[string]interface{}) (interface{}, error) {
+	incidentID := getStringParam(params, "incident_id", "")
+	context := getStringParam(params, "context", "")
+	model := getStringParam(params, "model", "claude-sonnet-4")
+
+	if context == "" {
+		return nil, fmt.Errorf("context parameter is required for AI analysis")
+	}
+
+	log.Printf("[ACTION] [AI_ANALYZE] Analyzing incident %s with %s", incidentID, model)
+	log.Printf("[ACTION] [AI_ANALYZE] Context: %s", context)
+
+	// TODO: Integrate with Claude API
+	// For MVP, return simulated AI analysis
+	// In production, this would call the Anthropic API:
+	//
+	// import anthropic "github.com/anthropics/anthropic-sdk-go"
+	//
+	// client := anthropic.NewClient()
+	// response, err := client.Messages.New(ctx, anthropic.MessageNewParams{
+	//     Model: anthropic.F(model),
+	//     Messages: []anthropic.MessageParam{
+	//         anthropic.NewUserMessage(anthropic.NewTextBlock(context)),
+	//     },
+	// })
+
+	return map[string]interface{}{
+		"incident_id": incidentID,
+		"model":       model,
+		"root_cause":  "Worker process crashed due to memory pressure (simulated)",
+		"recommendation": "Restart workers and increase memory limits by 100M",
+		"confidence":     0.85,
+		"reasoning":      "Based on log patterns and resource metrics",
+		"simulated":      true,
+		"note":           "Implement real Claude API integration for production use",
+	}, nil
 }

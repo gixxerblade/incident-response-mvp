@@ -1,0 +1,32 @@
+rule:
+  id: async-001
+  name: "Async Worker Queue Down"
+  description: "Detects when async task queue heartbeat fails to emit"
+  category: infrastructure
+  severity: high
+  enabled: true
+
+  conditions:
+    - field: event_type
+      operator: equals
+      value: "heartbeat_missing"
+    - field: service
+      operator: in
+      values:
+        - "async_bycore_general"
+        - "async_coreslight_push"
+        - "async_matrix"
+        - "async_matrix_room"
+        - "async_upload"
+    - field: job_type
+      operator: in
+      values: ["immediate", "scheduled"]
+
+  actions:
+    - type: create_incident
+      priority: high
+    - type: execute_playbook
+      playbook: "async-worker-recovery"
+    - type: notify
+      channel: "pagerduty"
+      message: "Async worker heartbeat missing for {{ event.service }} ({{ event.job_type }})"

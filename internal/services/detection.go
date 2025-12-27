@@ -109,7 +109,7 @@ func (de *DetectionEngine) EvaluateEvent(event *models.Event) error {
 	log.Printf("Evaluating event %s against %d rules", event.EventID, len(de.rules))
 
 	// Parse normalized data
-	var normalized map[string]interface{}
+	var normalized map[string]any
 	if err := json.Unmarshal([]byte(event.Normalized), &normalized); err != nil {
 		return fmt.Errorf("failed to parse normalized data: %w", err)
 	}
