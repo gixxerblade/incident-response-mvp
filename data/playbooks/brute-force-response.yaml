@@ -1,0 +1,42 @@
+playbook:
+  id: brute-force-response
+  name: "Brute Force Response"
+  description: "Automated response to brute force attacks"
+  version: "1.0"
+
+  inputs:
+    - name: incident_id
+      required: true
+    - name: source_ip
+      required: true
+
+  steps:
+    - id: step-1
+      name: "Block Source IP"
+      action: block_ip
+      parameters:
+        ip_address: "{{ inputs.source_ip }}"
+        duration: 3600  # 1 hour
+      on_failure: continue
+
+    - id: step-2
+      name: "Log Blocking Action"
+      action: log_action
+      parameters:
+        message: "Blocked IP {{ inputs.source_ip }} for brute force attempt"
+        level: "warning"
+
+    - id: step-3
+      name: "Update Incident Status"
+      action: update_incident
+      parameters:
+        incident_id: "{{ inputs.incident_id }}"
+        status: "contained"
+        notes: "IP blocked automatically"
+
+    - id: step-4
+      name: "Send Notification"
+      action: notify
+      parameters:
+        channel: "console"
+        message: "Brute force attack from {{ inputs.source_ip }} has been contained"

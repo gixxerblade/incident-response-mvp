@@ -1,0 +1,25 @@
+rule:
+  id: mal-001
+  name: "Suspicious Process Execution"
+  description: "Detects suspicious process behavior"
+  category: malware
+  severity: high
+  enabled: true
+
+  conditions:
+    - field: event_type
+      operator: equals
+      value: "process_execution"
+    - field: process_name
+      operator: regex
+      pattern: "^[a-f0-9]{8,}\\.exe$"
+    - field: parent_process
+      operator: in
+      values: ["cmd.exe", "powershell.exe", "wscript.exe"]
+
+  actions:
+    - type: create_incident
+      priority: high
+    - type: notify
+      channel: "console"
+      message: "Suspicious process detected: {{ event.process_name }}"

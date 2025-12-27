@@ -1,0 +1,25 @@
+rule:
+  id: auth-001
+  name: "Brute Force Login Detection"
+  description: "Detects multiple failed login attempts from the same source"
+  category: authentication
+  severity: high
+  enabled: true
+
+  conditions:
+    - field: event_type
+      operator: equals
+      value: "authentication_failed"
+    - field: source_ip
+      operator: count
+      threshold: 5
+      timewindow: 300  # 5 minutes in seconds
+
+  actions:
+    - type: create_incident
+      priority: high
+    - type: execute_playbook
+      playbook: "brute-force-response"
+    - type: notify
+      channel: "console"
+      message: "Brute force attack detected from {{ event.source_ip }}"

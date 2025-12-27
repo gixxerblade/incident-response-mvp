@@ -1,0 +1,26 @@
+rule:
+  id: net-001
+  name: "Port Scanning Detection"
+  description: "Detects port scanning activity"
+  category: reconnaissance
+  severity: high
+  enabled: true
+
+  conditions:
+    - field: event_type
+      operator: equals
+      value: "network_connection"
+    - field: source_ip
+      operator: count_distinct
+      count_field: destination_port
+      threshold: 20
+      timewindow: 60  # 1 minute
+
+  actions:
+    - type: create_incident
+      priority: high
+    - type: execute_playbook
+      playbook: "port-scan-response"
+    - type: notify
+      channel: "console"
+      message: "Port scan detected from {{ event.source_ip }}"

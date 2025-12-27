@@ -1,0 +1,40 @@
+playbook:
+  id: port-scan-response
+  name: "Port Scan Response"
+  description: "Response to port scanning activity"
+  version: "1.0"
+
+  inputs:
+    - name: incident_id
+      required: true
+    - name: source_ip
+      required: true
+
+  steps:
+    - id: step-1
+      name: "Log Port Scan"
+      action: log_action
+      parameters:
+        message: "Port scan detected from {{ inputs.source_ip }}"
+        level: "warning"
+
+    - id: step-2
+      name: "Block Scanner IP"
+      action: block_ip
+      parameters:
+        ip_address: "{{ inputs.source_ip }}"
+        duration: 7200  # 2 hours
+
+    - id: step-3
+      name: "Notify Security Team"
+      action: notify
+      parameters:
+        channel: "console"
+        message: "Port scan from {{ inputs.source_ip }} - IP blocked for 2 hours"
+
+    - id: step-4
+      name: "Mark Investigating"
+      action: update_incident
+      parameters:
+        incident_id: "{{ inputs.incident_id }}"
+        status: "investigating"
